@@ -98,21 +98,30 @@ class BookDB {
             const response = await this.writeQuery(
                 `update Books set ${conditions} where uid = $1`, [uid]
             )
+            return { status: "ok" }
         } catch (err) {
             return { status: "error", ...err }
         }
     }
     async deleteBook(uid) {
         try {
-            const response = this.writeQuery("delete from Books where uid = $1", [uid])
-            return { status: "ok" }
+            const response = await this.writeQuery("delete from Books where uid=$1 returning uid", [uid])
+            return { status: "ok", ...response.rows[0] }
         } catch (err) {
             return { status: "error", ...err }
         }
     }
     async getBookReviews() {
         try {
-            const response = await this.writeQuery("select * from Books");
+            const response = await this.writeQuery("select * from Book_Notes");
+            return { status: "ok", bookReviews: response.rows }
+        } catch (err) {
+            return { status: "error", ...err }
+        }
+    }
+    async getUsrBookReviews(user_id) {
+        try {
+            const response = await this.writeQuery("select * from Book_Notes where user_id = $1", [user_id])
             return { status: "ok", bookReviews: response.rows }
         } catch (err) {
             return { status: "error", ...err }
@@ -153,9 +162,11 @@ class BookDB {
                 conditions += "read_date = " + review.read_date + ","
             }
             conditions = conditions.substring(0, conditions.length - 1);
+            console.log(`update Book_Notes set ${conditions} where user_id=$1 and book_id=$2 returning user_id, book_id`)
             const response = await this.writeQuery(
-                `update Book_Notes set ${conditions} where user_id=$1 and book_id=$2`, [user_id, book_id]
+                `update Book_Notes set ${conditions} where user_id=$1 and book_id=$2 returning user_id, book_id`, [user_id, book_id]
             )
+            return { status: "ok", ...response.rows[0] }
         } catch (err) {
             return { status: "error", ...err }
         }
