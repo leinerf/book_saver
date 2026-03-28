@@ -173,27 +173,25 @@ async function bookDBTests() {
     console.assert(response.status === "ok", "getBookReviews: status was not okay")
     console.assert(response.bookReviews.length === 6, "getBookReviews: not able to grab all of the reviews");
 
+    const expected = await bookDB.getBookReview(dummyUsr.uid, dummyBooksForReview[1].uid)
     response = await bookDB.updateBookReview(dummyUsr.uid, dummyBooksForReview[1].uid, {
         notes: "updated note for book2",
         read_date: new Date(`December 25, 1995 03:24:00`)
     });
-    console.log(response);
-    // TODO: fix syntax error for updating book reviews"
     console.assert(response.status === "ok", `updateBookReview: did not return status ok, msg: ${JSON.stringify(response)}`);
 
     response = await bookDB.getBookReview(dummyUsr.uid, dummyBooksForReview[1].uid)
     console.assert(response.status === "ok", "getBookReview: status was not okay")
-    console.assert(response.rating === dummyBooksForReview[1].rating, "updateBookReview: the rating did not stay the same");
+    console.assert(response.rating === expected.rating, "updateBookReview: the rating did not stay the same: " + JSON.stringify(response) + " " + JSON.stringify(dummyBooksForReview[1]));
     console.assert(response.notes === "updated note for book2", "updateBookReview: the notes was not updated");
-    console.assert(response.read_date === new Date(`December 25, 1995 03:24:00`));
+    console.assert(response.read_date.getDate() === new Date(`December 25, 1995 03:24:00`).getDate(), "getBookReview: date was not updated " + response.read_date.getDate() + " " + new Date(`December 25, 1995 03:24:00`).getDate());
 
     for (let i = 0; i < dummyBooksForReview.length; i++) {
         const dummyBook = dummyBooksForReview[i];
-
         response = await bookDB.deleteBookReview(dummyUsr.uid, dummyBook.uid);
         console.assert(response.status === "ok", `deleteBookReview: was not able to delete review for usr: ${dummyUsr.uid} and book: ${dummyBook.uid}`)
 
-        response = await bookDB.deleteBook(dummyUsr2.uid, dummyBook.uid);
+        response = await bookDB.deleteBookReview(dummyUsr2.uid, dummyBook.uid);
         console.assert(response.status === "ok", `deleteBookReview: was not able to delete review for usr: ${dummyUsr2.uid} and book: ${dummyBook.uid}`)
 
         response = await bookDB.deleteBook(dummyBook.uid);

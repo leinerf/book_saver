@@ -142,7 +142,7 @@ class BookDB {
             const response = await this.writeQuery(
                 `insert into Book_Notes (user_id, book_id, notes, rating, read_date)
                 values ($1, $2, $3, $4, $5) returning user_id, book_id
-                `, [user_id, book_id, review.notes || "", review.rating || null, review.read_date || null]
+                `, [user_id, book_id, review.notes || "", review.rating || null, this._formatDate(review.read_date) || null]
             );
             return { status: "ok", ...response.rows[0] }
         } catch (err) {
@@ -159,10 +159,9 @@ class BookDB {
                 conditions += "rating = " + review.rating + ","
             }
             if (review.read_date) {
-                conditions += "read_date = " + review.read_date + ","
+                conditions += "read_date = \'" + this._formatDate(review.read_date) + "\' ,"
             }
             conditions = conditions.substring(0, conditions.length - 1);
-            console.log(`update Book_Notes set ${conditions} where user_id=$1 and book_id=$2 returning user_id, book_id`)
             const response = await this.writeQuery(
                 `update Book_Notes set ${conditions} where user_id=$1 and book_id=$2 returning user_id, book_id`, [user_id, book_id]
             )
@@ -180,6 +179,9 @@ class BookDB {
         } catch (err) {
             return { status: "error", ...err }
         }
+    }
+    _formatDate(date) {
+        return date.toISOString().slice(0, 19).replace('T', ' ');
     }
     closeDB() {
         this.pool.end();
