@@ -69,6 +69,14 @@ class BookDB {
             return { status: "error", ...err }
         }
     }
+    async getBookByISBN(isbn) {
+        try {
+            const response = await this.writeQuery("seect * from Books where isbn = $1", [isbn])
+            return { status: "ok", ...response.rows[0] }
+        } catch (err) {
+            return { status: "error", ...err }
+        }
+    }
     async addBook(name, isbn, description, author) {
         try {
             const response = await this.writeQuery(
@@ -92,13 +100,16 @@ class BookDB {
                 conditions += "isbn = " + details.isbn + ","
             }
             if (details.description) {
-                conditions += "description = " + details.description + ","
+                conditions += "description = \'" + details.description + "\',"
+            }
+            if (details.author) {
+                conditions += "author = \'" + details.author + "\',"
             }
             conditions = conditions.substring(0, conditions.length - 1);
             const response = await this.writeQuery(
-                `update Books set ${conditions} where uid = $1`, [uid]
+                `update Books set ${conditions} where uid = $1 returning uid`, [uid]
             )
-            return { status: "ok" }
+            return { status: "ok", ...response.rows[0] }
         } catch (err) {
             return { status: "error", ...err }
         }
